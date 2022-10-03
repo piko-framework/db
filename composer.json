@@ -1,0 +1,42 @@
+{
+	"name" : "piko/db",
+	"description" : "A lightweight Active Record helper linked with a database access object on top of PDO.",
+	"keywords" : [
+		"active record",
+		"database",
+		"record",
+		"sql"
+	],
+	"authors" : [{
+			"name" : "Sylvain Philip",
+			"homepage" : "https://www.sphilip.com",
+			"role" : "Developer"
+		}
+	],
+	"homepage" : "https://github.com/piko-framework/db",
+	"license" : "LGPL-3.0",
+	"require" : {
+		"php" : ">=7.1.0",
+		"piko/core" : "^1.0"
+	},
+	"autoload" : {
+		"psr-4" : {
+			"piko\\" : "src"
+		}
+	},
+	"require-dev" : {
+		"phpunit/phpunit" : "^9.5",
+		"squizlabs/php_codesniffer" : "^3.5",
+		"phpstan/phpstan" : "^0.12.99"
+	},
+	"scripts" : {
+		"test" : [
+			"@phpunit",
+			"@phpcs",
+			"@phpstan"
+		],
+		"phpunit" : "phpunit",
+		"phpcs" : "phpcs --standard=vendor/piko/core/coding-standard  src",
+		"phpstan" : "phpstan"
+	}
+}
