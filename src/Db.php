@@ -30,10 +30,10 @@ class Db extends PDO
      */
     public function __construct($config = [])
     {
-        $dsn      = isset($config['dsn'])      ? $config['dsn']      : null;
-        $username = isset($config['username']) ? $config['username'] : null;
-        $password = isset($config['password']) ? $config['password'] : null;
-        $options  = isset($config['options'])  ? $config['options']  : null;
+        $dsn      = $config['dsn'] ?? null;
+        $username = $config['username'] ?? null;
+        $password = $config['password'] ?? null;
+        $options  = $config['options']  ??  null;
 
         /** @phpstan-ignore-next-line */
         parent::__construct($dsn, $username, $password, $options);

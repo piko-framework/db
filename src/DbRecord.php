@@ -166,16 +166,21 @@ abstract class DbRecord extends Component
      */
     public function load($id = 0)
     {
-        $st = $this->db->prepare('SELECT * FROM `' . $this->tableName . '` WHERE `' . $this->primaryKey . '` = ?');
-        $st->bindParam(1, $id, PDO::PARAM_INT);
-        $st->execute();
-        $data = $st->fetch(PDO::FETCH_ASSOC);
+        $query = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $this->primaryKey . '` = ?';
+        $st = $this->db->prepare($query);
 
-        if (!$data) {
-            throw new RuntimeException("Error while trying to load item {$id}");
+        if (!$st instanceof PDOStatement) {
+            $error = $this->db->errorInfo();
+            throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
         }
 
-        $this->data = $data;
+        $st->setFetchMode(PDO::FETCH_INTO, $this);
+        $st->bindParam(1, $id, $this->schema[$this->primaryKey]);
+        $st->execute();
+
+        if (!$st->fetch()) {
+            throw new RuntimeException("Error while trying to load item {$id}");
+        }
     }
 
     /**
@@ -186,7 +191,7 @@ abstract class DbRecord extends Component
      */
     protected function beforeSave($insert): bool
     {
-        $return = $this->trigger('beforeSave', [$insert]);
+        $return = $this->trigger('beforeSave', [$this, $insert]);
 
         return in_array(false, $return, true) ? false : true;
     }
@@ -198,7 +203,7 @@ abstract class DbRecord extends Component
      */
     protected function beforeDelete(): bool
     {
-        $return = $this->trigger('beforeDelete');
+        $return = $this->trigger('beforeDelete', [$this]);
 
         return in_array(false, $return, true) ? false : true;
     }
@@ -210,7 +215,7 @@ abstract class DbRecord extends Component
      */
     protected function afterSave(): void
     {
-        $this->trigger('afterSave');
+        $this->trigger('afterSave', [$this]);
     }
 
     /**
@@ -220,7 +225,7 @@ abstract class DbRecord extends Component
      */
     protected function afterDelete(): void
     {
-        $this->trigger('afterDelete');
+        $this->trigger('afterDelete', [$this]);
     }
 
     /**
@@ -264,8 +269,10 @@ abstract class DbRecord extends Component
         $st = $this->db->prepare($query);
 
         if (!$st instanceof PDOStatement) {
+            // @codeCoverageIgnoreStart
             $error = $this->db->errorInfo();
             throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
+            // @codeCoverageIgnoreEnd
         }
 
         foreach ($this->data as $key => $value) {
@@ -273,8 +280,10 @@ abstract class DbRecord extends Component
         }
 
         if ($st->execute() === false) {
+            // @codeCoverageIgnoreStart
             $error = $st->errorInfo();
-            throw new RuntimeException("Query failed with error {$error[0]} : {$error[2]}");
+            throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
+            // @codeCoverageIgnoreEnd
         }
 
         if ($insert) {
@@ -295,18 +304,20 @@ abstract class DbRecord extends Component
     public function delete(): bool
     {
         if (!isset($this->data[$this->primaryKey])) {
-            throw new RuntimeException("Can't delete because item is not loaded.");
+            throw new RuntimeException("Item cannot be delete because it is not loaded.");
         }
 
         if (!$this->beforeDelete()) {
             return false;
         }
 
-        $st = $this->db->prepare('DELETE FROM ' . $this->tableName . ' WHERE id = ?');
+        $st = $this->db->prepare('DELETE FROM ' . $this->tableName . ' WHERE `' . $this->primaryKey . '` = ?');
         $st->bindParam(1, $this->data[$this->primaryKey], PDO::PARAM_INT);
 
         if (!$st->execute()) {
+            // @codeCoverageIgnoreStart
             throw new RuntimeException("Error while trying to delete item {$this->data[$this->primaryKey]}");
+            // @codeCoverageIgnoreEnd
         }
 
         $this->afterDelete();
