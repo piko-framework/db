@@ -3,9 +3,9 @@
 /**
  * This file is part of Piko - Web micro framework
  *
- * @copyright 2019 Sylvain PHILIP.
+ * @copyright 2019-2022 Sylvain PHILIP
  * @license LGPL-3.0; see LICENSE.txt
- * @link https://github.com/ilhooq/piko
+ * @link https://github.com/piko-framework/db
  */
 
 declare(strict_types=1);
