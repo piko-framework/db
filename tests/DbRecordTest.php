@@ -162,6 +162,41 @@ EOL;
 
         $this->assertFalse($contact->delete());
     }
+
+    public function testModelValidation()
+    {
+        $model = new Contact();
+
+        $this->assertFalse($model->isValid());
+
+        $errors = $model->getErrors();
+
+        $this->assertArrayHasKey('firstname', $errors);
+        $this->assertArrayHasKey('lastname', $errors);
+
+        $model = new Contact();
+
+        $model->firstname = 'John';
+        $model->lastname = 'Lennon';
+
+        $this->assertTrue($model->isValid());
+    }
+
+    public function testModelBind()
+    {
+        $model = new Contact();
+
+        $data = [
+            'id' => 1,
+            'name' => 'John Lennon',
+            'firstname' => 'John',
+            'lastname' => 'Lennon',
+            'order' => 1,
+        ];
+
+        $model->bind($data);
+        $this->assertEquals($data, $model->toArray());
+    }
 }
 
 class Contact extends \piko\DbRecord
@@ -175,6 +210,17 @@ class Contact extends \piko\DbRecord
         'lastname'  => self::TYPE_STRING,
         'order'     =>  self::TYPE_INT
     ];
+
+    protected function validate(): void
+    {
+        if (empty($this->firstname)) {
+            $this->setError('firstname', 'First name is required');
+        }
+
+        if (empty($this->lastname)) {
+            $this->setError('lastname', 'Last name is required');
+        }
+    }
 }
 
 class Contact2 extends \piko\DbRecord

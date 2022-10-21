@@ -24,6 +24,8 @@ use RuntimeException;
  */
 abstract class DbRecord extends Component
 {
+    use ModelTrait;
+
     public const TYPE_INT = PDO::PARAM_INT;
     public const TYPE_STRING = PDO::PARAM_STR;
     public const TYPE_BOOL = PDO::PARAM_BOOL;
@@ -90,6 +92,26 @@ abstract class DbRecord extends Component
         }
 
         parent::__construct($config);
+    }
+
+    /**
+     * Override ModelTrait::bind()
+     *
+     * @param mixed[] $data
+     */
+    public function bind(array $data): void
+    {
+        $this->data = array_merge($this->data, $data);
+    }
+
+    /**
+     * Override ModelTrait::toArray()
+     *
+     * @return mixed[]
+     */
+    public function toArray(): array
+    {
+        return $this->data;
     }
 
     /**
