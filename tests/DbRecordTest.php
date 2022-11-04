@@ -1,8 +1,9 @@
 <?php
 use PHPUnit\Framework\TestCase;
-
 use Piko\DbRecord\Event\BeforeDeleteEvent;
 use Piko\DbRecord\Event\BeforeSaveEvent;
+use Piko\Tests\Contact;
+use Piko\Tests\Contact2;
 
 class DbRecordTest extends TestCase
 {
@@ -187,42 +188,4 @@ EOL;
         $model->bind($data);
         $this->assertEquals($data, $model->toArray());
     }
-}
-
-class Contact extends \Piko\DbRecord
-{
-    protected $tableName = 'contact';
-
-    protected $schema = [
-        'id'        => self::TYPE_INT,
-        'name'      => self::TYPE_STRING,
-        'firstname' => self::TYPE_STRING,
-        'lastname'  => self::TYPE_STRING,
-        'order'     =>  self::TYPE_INT
-    ];
-
-    protected function validate(): void
-    {
-        if (empty($this->firstname)) {
-            $this->setError('firstname', 'First name is required');
-        }
-
-        if (empty($this->lastname)) {
-            $this->setError('lastname', 'Last name is required');
-        }
-    }
-}
-
-class Contact2 extends \Piko\DbRecord
-{
-    protected $tableName = 'contact';
-    protected $primaryKey = 'contact_id';
-
-    protected $schema = [
-        'id'        => self::TYPE_INT,
-        'name'      => self::TYPE_STRING,
-        'firstname' => self::TYPE_STRING,
-        'lastname'  => self::TYPE_STRING,
-        'order'     =>  self::TYPE_INT
-    ];
 }
