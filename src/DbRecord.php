@@ -158,7 +158,7 @@ abstract class DbRecord
      *
      * @param string $attribute The attribute's name.
      */
-    public function __unset($attribute)
+    public function __unset(string $attribute)
     {
         if (isset($this->data[$attribute])) {
             unset($this->data[$attribute]);
@@ -199,7 +199,7 @@ abstract class DbRecord
      * @param boolean $insert If the row is a new record, the value will be true, otherwise, false.
      * @return boolean
      */
-    protected function beforeSave($insert): bool
+    protected function beforeSave(bool $insert): bool
     {
         $event = new BeforeSaveEvent($insert, $this);
         $this->trigger($event);
@@ -246,7 +246,7 @@ abstract class DbRecord
      * @throws RuntimeException
      * @return boolean
      */
-    public function save()
+    public function save(): bool
     {
         foreach ($this->data as $key => $value) {
             $this->checkColumn($key);
