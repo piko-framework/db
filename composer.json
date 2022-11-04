@@ -1,6 +1,6 @@
 {
 	"name" : "piko/db-record",
-	"description" : "A lightweight Active Record helper linked built on top of PDO.",
+	"description" : "A lightweight Active Record helper built on top of PDO.",
 	"keywords" : [
 		"active record",
 		"database",
