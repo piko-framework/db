@@ -1,14 +1,16 @@
 <?php
 use PHPUnit\Framework\TestCase;
-use piko\Db;
-use piko\Piko;
+
+use Piko\DbRecord\Event\BeforeDeleteEvent;
+use Piko\DbRecord\Event\BeforeSaveEvent;
 
 class DbRecordTest extends TestCase
 {
+    protected $db;
+
     protected function setUp(): void
     {
-        $db = new Db(['dsn' => 'sqlite::memory:']);
-        Piko::set('db', $db);
+        $this->db = new PDO('sqlite::memory:');
 
         $query = <<<EOL
 CREATE TABLE contact (
@@ -19,23 +21,17 @@ CREATE TABLE contact (
   `order` INTEGER
 )
 EOL;
-        $db->exec($query);
+        $this->db->exec($query);
     }
 
     protected function tearDown(): void
     {
-        $db = Piko::get('db');
-
-        if ($db instanceof PDO) {
-            $db = null;
-        }
-
-        Piko::set('db', null);
+        $this->db = null;
     }
 
     protected function createContact()
     {
-        $contact = new Contact();
+        $contact = new Contact($this->db);
         $contact->firstname = 'Sylvain';
         $contact->lastname = 'Philip';
         $contact->order = 1; // order is a reserved word
@@ -46,18 +42,14 @@ EOL;
 
     public function testWithNullDb()
     {
-        Piko::set('db', null);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/No db instance found/');
-        new Contact();
+        $this->expectException(TypeError::class);
+        new Contact(null);
     }
 
     public function testWithWrongDb()
     {
-        Piko::set('db', new DateTime());
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Db must be instance of \PDO.');
-        new Contact();
+        $this->expectException(TypeError::class);
+        new Contact(new DateTime());
     }
 
     public function testCreate()
@@ -72,7 +64,7 @@ EOL;
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessageMatches('/no such column: contact_id/');
-        new Contact2(1);
+        (new Contact2($this->db))->load(1);
     }
 
     public function testWrongColumnAccess()
@@ -101,22 +93,21 @@ EOL;
     public function testUpdate()
     {
         $this->createContact();
-        $contact = new Contact(1);
-
+        $contact = (new Contact($this->db))->load(1);
         $this->assertEquals('Sylvain', $contact->firstname);
 
         $contact->firstname .= ' updated';
         $contact->save();
 
-        $contact = new Contact(1);
+        $contact = (new Contact($this->db))->load(1);
         $this->assertEquals('Sylvain updated', $contact->firstname);
     }
 
     public function testBeforeSave()
     {
         $contact = $this->createContact();
-        $contact->on('beforeSave', function($instance, $insert) {
-            $instance->name = $instance->firstname . ' ' . $instance->lastname;
+        $contact->on(BeforeSaveEvent::class, function(BeforeSaveEvent $event) {
+            $event->record->name = $event->record->firstname . ' ' . $event->record->lastname;
         });
         $this->assertTrue($contact->save());
         $this->assertEquals('Sylvain Philip', $contact->name);
@@ -125,8 +116,8 @@ EOL;
     public function testBeforeSaveFalse()
     {
         $contact = $this->createContact();
-        $contact->on('beforeSave', function($insert) use($contact) {
-            return false;
+        $contact->on(BeforeSaveEvent::class, function(BeforeSaveEvent $event) {
+            $event->isValid = false;
         });
         $this->assertFalse($contact->save());
     }
@@ -139,12 +130,12 @@ EOL;
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Error while trying to load item 1');
-        $contact = new Contact(1);
+        $contact = (new Contact($this->db))->load(1);
     }
 
     public function testDeleteNotLoaded()
     {
-        $contact = new Contact();
+        $contact = new Contact($this->db);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Item cannot be delete because it is not loaded.');
         $contact->delete();
@@ -153,11 +144,10 @@ EOL;
     public function testBeforeDelete()
     {
         $contact = $this->createContact();
-        $contact->on('beforeDelete', function($instance) {
-            if ($instance->firstname == 'Sylvain') {
-                return false;
+        $contact->on(BeforeDeleteEvent::class, function(BeforeDeleteEvent $event) {
+            if ($event->record->firstname == 'Sylvain') {
+                $event->isValid = false;
             }
-            return true;
         });
 
         $this->assertFalse($contact->delete());
@@ -165,7 +155,7 @@ EOL;
 
     public function testModelValidation()
     {
-        $model = new Contact();
+        $model = new Contact($this->db);
 
         $this->assertFalse($model->isValid());
 
@@ -174,7 +164,7 @@ EOL;
         $this->assertArrayHasKey('firstname', $errors);
         $this->assertArrayHasKey('lastname', $errors);
 
-        $model = new Contact();
+        $model = new Contact($this->db);
 
         $model->firstname = 'John';
         $model->lastname = 'Lennon';
@@ -184,7 +174,7 @@ EOL;
 
     public function testModelBind()
     {
-        $model = new Contact();
+        $model = new Contact($this->db);
 
         $data = [
             'id' => 1,
@@ -199,7 +189,7 @@ EOL;
     }
 }
 
-class Contact extends \piko\DbRecord
+class Contact extends \Piko\DbRecord
 {
     protected $tableName = 'contact';
 
@@ -223,7 +213,7 @@ class Contact extends \piko\DbRecord
     }
 }
 
-class Contact2 extends \piko\DbRecord
+class Contact2 extends \Piko\DbRecord
 {
     protected $tableName = 'contact';
     protected $primaryKey = 'contact_id';

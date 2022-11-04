@@ -5,13 +5,17 @@
  *
  * @copyright 2019-2022 Sylvain PHILIP
  * @license LGPL-3.0; see LICENSE.txt
- * @link https://github.com/piko-framework/db
+ * @link https://github.com/piko-framework/db-record
  */
 
 declare(strict_types=1);
 
-namespace piko;
+namespace Piko;
 
+use Piko\DbRecord\Event\AfterDeleteEvent;
+use Piko\DbRecord\Event\AfterSaveEvent;
+use Piko\DbRecord\Event\BeforeDeleteEvent;
+use Piko\DbRecord\Event\BeforeSaveEvent;
 use PDO;
 use PDOStatement;
 use RuntimeException;
@@ -22,8 +26,9 @@ use RuntimeException;
  *
  * @author Sylvain PHILIP <contact@sphilip.com>
  */
-abstract class DbRecord extends Component
+abstract class DbRecord
 {
+    use EventHandlerTrait;
     use ModelTrait;
 
     public const TYPE_INT = PDO::PARAM_INT;
@@ -60,44 +65,25 @@ abstract class DbRecord extends Component
     protected $primaryKey = 'id';
 
     /**
-     * @var mixed[] Represents the rows's data.
+     * @var array<string, string|int|bool> Represents the rows's data.
      */
     protected $data = [];
 
     /**
      * Constructor
      *
-     * @param number $id The value of the row primary key in order to load the row imediately.
-     * @param mixed[] $config An array of configuration.
-     * @throws RuntimeException
+     * @param PDO $db A PDO instance
      *
-     * @return void
      */
-    public function __construct($id = 0, $config = [])
+    public function __construct(PDO $db)
     {
-        $db = Piko::get('db');
-
-        if ($db === null) {
-            throw new RuntimeException("No db instance found. You must set a db instance with Piko::set('db', \$db).");
-        }
-
-        if (!$db instanceof PDO) {
-            throw new RuntimeException('Db must be instance of \PDO.');
-        }
-
         $this->db = $db;
-
-        if ((int) $id > 0) {
-            $this->load((int) $id);
-        }
-
-        parent::__construct($config);
     }
 
     /**
      * Override ModelTrait::bind()
      *
-     * @param mixed[] $data
+     * @param array<string, string|int|bool> $data
      */
     public function bind(array $data): void
     {
@@ -122,7 +108,7 @@ abstract class DbRecord extends Component
      * @throws RuntimeException
      * @see DbRecord::$schema
      */
-    protected function checkColumn($name)
+    protected function checkColumn(string $name)
     {
         if (!isset($this->schema[$name])) {
             throw new RuntimeException("$name is not in the table schema.");
@@ -135,7 +121,7 @@ abstract class DbRecord extends Component
      * @param string $attribute The attribute's name.
      * @return mixed The attribute's value.
      */
-    public function __get($attribute)
+    public function __get(string $attribute)
     {
         $this->checkColumn($attribute);
 
@@ -147,11 +133,11 @@ abstract class DbRecord extends Component
      * Magick method to set row's data as class attribute.
      *
      * @param string $attribute The attribute's name.
-     * @param mixed $value The attribute's value.
+     * @param string|int|bool $value The attribute's value.
      *
      * @return void
      */
-    public function __set($attribute, $value)
+    public function __set(string $attribute, $value)
     {
         $this->checkColumn($attribute);
 
@@ -163,7 +149,7 @@ abstract class DbRecord extends Component
      *
      * @param string $attribute The attribute's name.
      */
-    public function __isset($attribute)
+    public function __isset(string $attribute)
     {
         return isset($this->data[$attribute]);
     }
@@ -183,10 +169,10 @@ abstract class DbRecord extends Component
      * Load row data.
      *
      * @param number $id The value of the row primary key.
-     * @return void
+     * @return static
      * @throws RuntimeException
      */
-    public function load($id = 0)
+    public function load($id = 0): DbRecord
     {
         $query = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $this->primaryKey . '` = ?';
         $st = $this->db->prepare($query);
@@ -203,6 +189,8 @@ abstract class DbRecord extends Component
         if (!$st->fetch()) {
             throw new RuntimeException("Error while trying to load item {$id}");
         }
+
+        return $this;
     }
 
     /**
@@ -213,9 +201,10 @@ abstract class DbRecord extends Component
      */
     protected function beforeSave($insert): bool
     {
-        $return = $this->trigger('beforeSave', [$this, $insert]);
+        $event = new BeforeSaveEvent($insert, $this);
+        $this->trigger($event);
 
-        return in_array(false, $return, true) ? false : true;
+        return $event->isValid;
     }
 
     /**
@@ -225,9 +214,10 @@ abstract class DbRecord extends Component
      */
     protected function beforeDelete(): bool
     {
-        $return = $this->trigger('beforeDelete', [$this]);
+        $event = new BeforeDeleteEvent($this);
+        $this->trigger($event);
 
-        return in_array(false, $return, true) ? false : true;
+        return $event->isValid;
     }
 
     /**
@@ -237,7 +227,7 @@ abstract class DbRecord extends Component
      */
     protected function afterSave(): void
     {
-        $this->trigger('afterSave', [$this]);
+        $this->trigger(new AfterSaveEvent($this));
     }
 
     /**
@@ -247,7 +237,7 @@ abstract class DbRecord extends Component
      */
     protected function afterDelete(): void
     {
-        $this->trigger('afterDelete', [$this]);
+        $this->trigger(new AfterDeleteEvent($this));
     }
 
     /**
