@@ -81,6 +81,30 @@ abstract class DbRecord
     }
 
     /**
+     * Quote table or column name
+     *
+     * @param string $identifier
+     *
+     * @return string
+     */
+    public function quoteIdentifier($identifier): string
+    {
+        $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        switch ($driver) {
+            case 'mysql':
+            case 'sqlite':
+                return '`' . $identifier . '`';
+            case 'pgsql':
+                return '"' . $identifier . '"';
+            case 'sqlsrv':
+                return '[' . $identifier . ']';
+            default:
+                return $identifier;
+        }
+    }
+
+    /**
      * Override ModelTrait::bind()
      *
      * @param array<string, string|int|bool> $data
@@ -174,7 +198,7 @@ abstract class DbRecord
      */
     public function load($id = 0): DbRecord
     {
-        $query = 'SELECT * FROM `' . $this->tableName . '` WHERE `' . $this->primaryKey . '` = ?';
+        $query = 'SELECT * FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?';
         $st = $this->db->prepare($query);
 
         if (!$st instanceof PDOStatement) {
@@ -264,17 +288,17 @@ abstract class DbRecord
         if ($insert) {
             foreach ($cols as &$key) {
                 $valueKeys[] = ':' . $key;
-                $key = '`' . $key . '`';
+                $key = $this->quoteIdentifier($key);
             }
 
-            $query = 'INSERT INTO `' . $this->tableName . '` (' . implode(', ', $cols) . ')';
+            $query = 'INSERT INTO ' . $this->quoteIdentifier($this->tableName) . ' (' . implode(', ', $cols) . ')';
             $query .= ' VALUES (' . implode(', ', $valueKeys) . ')';
         } else {
             foreach ($cols as $key) {
-                $valueKeys[] = '`' . $key . '`' . '= :' . $key;
+                $valueKeys[] = $this->quoteIdentifier($key) . '= :' . $key;
             }
 
-            $query = 'UPDATE `' . $this->tableName . '` SET ' . implode(', ', $valueKeys);
+            $query = 'UPDATE ' . $this->quoteIdentifier($this->tableName) . ' SET ' . implode(', ', $valueKeys);
             $query .= ' WHERE ' . $this->primaryKey . ' = ' . (int) $this->data[$this->primaryKey];
         }
 
@@ -323,7 +347,10 @@ abstract class DbRecord
             return false;
         }
 
-        $st = $this->db->prepare('DELETE FROM ' . $this->tableName . ' WHERE `' . $this->primaryKey . '` = ?');
+        $st = $this->db->prepare(
+            'DELETE FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?'
+        );
+
         $st->bindParam(1, $this->data[$this->primaryKey], PDO::PARAM_INT);
 
         if (!$st->execute()) {
