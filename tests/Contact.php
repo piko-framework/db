@@ -1,17 +1,26 @@
 <?php
 namespace Piko\Tests;
 
+use Piko\DbRecord\TableAttribute;
+use Piko\DbRecord\FieldAttribute;
+
+#[TableAttribute(tableName: 'contact')]
 class Contact extends \Piko\DbRecord
 {
-    protected $tableName = 'contact';
+    #[FieldAttribute(primaryKey: true)]
+    public ?int $id = null;
 
-    protected $schema = [
-        'id'        => self::TYPE_INT,
-        'name'      => self::TYPE_STRING,
-        'firstname' => self::TYPE_STRING,
-        'lastname'  => self::TYPE_STRING,
-        'order'     =>  self::TYPE_INT
-    ];
+    #[FieldAttribute]
+    public $name = null;
+
+    #[FieldAttribute]
+    public ?string $firstname = null;
+
+    #[FieldAttribute]
+    public ?string $lastname = null;
+
+    #[FieldAttribute]
+    public ?int $order = null;
 
     protected function validate(): void
     {

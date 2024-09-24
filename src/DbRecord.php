@@ -1,9 +1,9 @@
 <?php
 
 /**
- * This file is part of Piko - Web micro framework
+ * This file is part of Piko DbRecord - Web micro framework
  *
- * @copyright 2019-2022 Sylvain PHILIP
+ * @copyright 2019-2024 Sylvain PHILIP
  * @license LGPL-3.0; see LICENSE.txt
  * @link https://github.com/piko-framework/db-record
  */
@@ -12,13 +12,19 @@ declare(strict_types=1);
 
 namespace Piko;
 
-use Piko\DbRecord\Event\AfterDeleteEvent;
-use Piko\DbRecord\Event\AfterSaveEvent;
-use Piko\DbRecord\Event\BeforeDeleteEvent;
-use Piko\DbRecord\Event\BeforeSaveEvent;
 use PDO;
+use PDOException;
 use PDOStatement;
+use ReflectionClass;
 use RuntimeException;
+use ReflectionNamedType;
+use InvalidArgumentException;
+use Piko\DbRecord\FieldAttribute;
+use Piko\DbRecord\TableAttribute;
+use Piko\DbRecord\Event\AfterSaveEvent;
+use Piko\DbRecord\Event\BeforeSaveEvent;
+use Piko\DbRecord\Event\AfterDeleteEvent;
+use Piko\DbRecord\Event\BeforeDeleteEvent;
 
 /**
  * DbRecord represents a database table's row and implements
@@ -78,6 +84,7 @@ abstract class DbRecord
     public function __construct(PDO $db)
     {
         $this->db = $db;
+        $this->initializeSchema();
     }
 
     /**
@@ -111,7 +118,13 @@ abstract class DbRecord
      */
     public function bind(array $data): void
     {
-        $this->data = array_merge($this->data, $data);
+        $fields = array_keys($this->schema);
+
+        foreach ($fields as $field) {
+            if (isset($data[$field])) {
+                $this->$field = $data[$field];
+            }
+        }
     }
 
     /**
@@ -121,7 +134,15 @@ abstract class DbRecord
      */
     public function toArray(): array
     {
-        return $this->data;
+        $fields = array_keys($this->schema);
+
+        $data = [];
+
+        foreach ($fields as $field) {
+            $data[$field] = $this->$field;
+        }
+
+        return $data;
     }
 
     /**
@@ -137,6 +158,56 @@ abstract class DbRecord
         if (!isset($this->schema[$name])) {
             throw new RuntimeException("$name is not in the table schema.");
         }
+    }
+
+    /**
+     * Initialize the schema for the database table.
+     *
+     * This method uses reflection to inspect the current class for properties that have the `FieldAttribute` attribute.
+     * It then builds the schema array, which describes the structure of the table, using these properties.
+     * Additionally, it sets the table name if a `TableAttribute` is present on the class and identifies
+     * the primary key based on field attributes.
+     *
+     * @return void
+     */
+    protected function initializeSchema(): void
+    {
+        $reflectionClass = new ReflectionClass($this);
+
+        $tableAttribute = $reflectionClass->getAttributes(TableAttribute::class)[0] ?? null;
+
+        if ($tableAttribute) {
+            $this->tableName = $tableAttribute->newInstance()->tableName;
+        }
+
+        foreach ($reflectionClass->getProperties() as $property) {
+
+            $fieldAttribute = $property->getAttributes(FieldAttribute::class)[0] ?? null;
+
+            if ($fieldAttribute) {
+                $fieldInstance = $fieldAttribute->newInstance();
+                $fieldName = $fieldInstance->fieldName ?? $property->getName();
+                $propertyType = $property->getType();
+                // Default type to string if no type is declared
+                $type = $propertyType instanceof ReflectionNamedType ? $propertyType->getName() : 'string';
+
+                $this->schema[$fieldName] = $this->getSchemaType($type);
+
+                if ($fieldInstance->primaryKey) {
+                    $this->primaryKey = $fieldName;
+                }
+            }
+        }
+    }
+
+    private function getSchemaType(string $type): int
+    {
+        return match ($type) {
+            'int' => self::TYPE_INT,
+            'string' => self::TYPE_STRING,
+            'bool' => self::TYPE_BOOL,
+            default => throw new InvalidArgumentException("Unsupported type: $type"),
+        };
     }
 
     /**
@@ -272,17 +343,13 @@ abstract class DbRecord
      */
     public function save(): bool
     {
-        foreach ($this->data as $key => $value) {
-            $this->checkColumn($key);
-        }
-
-        $insert = empty($this->data[$this->primaryKey]) ? true : false;
+        $insert = empty($this->{$this->primaryKey}) ? true : false;
 
         if (!$this->beforeSave($insert)) {
             return false;
         }
 
-        $cols = array_keys($this->data);
+        $cols = array_keys($this->schema);
         $valueKeys = [];
 
         if ($insert) {
@@ -299,31 +366,28 @@ abstract class DbRecord
             }
 
             $query = 'UPDATE ' . $this->quoteIdentifier($this->tableName) . ' SET ' . implode(', ', $valueKeys);
-            $query .= ' WHERE ' . $this->primaryKey . ' = ' . (int) $this->data[$this->primaryKey];
+            $query .= ' WHERE ' . $this->primaryKey . ' = ' . (int) $this->{$this->primaryKey};
         }
 
-        $st = $this->db->prepare($query);
+        try {
+            $st = $this->db->prepare($query);
+        } catch (PDOException $e) {
+            $code = $e->errorInfo[0] ?? '';
+            $msg = $e->errorInfo[2] ?? '';
 
-        if (!$st instanceof PDOStatement) {
-            // @codeCoverageIgnoreStart
-            $error = $this->db->errorInfo();
-            throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
-            // @codeCoverageIgnoreEnd
+            throw new RuntimeException("Query '$query' failed with error {$code} : {$msg}");
         }
 
-        foreach ($this->data as $key => $value) {
-            $st->bindValue(':' . $key, $value, $this->schema[$key]);
+        $fields = array_keys($this->schema);
+
+        foreach ($fields as $field) {
+            $st->bindValue(':' . $field, $this->$field, $this->schema[$field]);
         }
 
-        if ($st->execute() === false) {
-            // @codeCoverageIgnoreStart
-            $error = $st->errorInfo();
-            throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
-            // @codeCoverageIgnoreEnd
-        }
+        $st->execute();
 
         if ($insert) {
-            $this->data[$this->primaryKey] = $this->db->lastInsertId();
+            $this->{$this->primaryKey} = (int) $this->db->lastInsertId();
         }
 
         $this->afterSave();
@@ -339,7 +403,7 @@ abstract class DbRecord
      */
     public function delete(): bool
     {
-        if (!isset($this->data[$this->primaryKey])) {
+        if (empty($this->{$this->primaryKey})) {
             throw new RuntimeException("Item cannot be delete because it is not loaded.");
         }
 
@@ -350,15 +414,9 @@ abstract class DbRecord
         $st = $this->db->prepare(
             'DELETE FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?'
         );
-
-        $st->bindParam(1, $this->data[$this->primaryKey], PDO::PARAM_INT);
-
-        if (!$st->execute()) {
-            // @codeCoverageIgnoreStart
-            throw new RuntimeException("Error while trying to delete item {$this->data[$this->primaryKey]}");
-            // @codeCoverageIgnoreEnd
-        }
-
+        $id = $this->{$this->primaryKey};
+        $st->bindParam(1, $id, PDO::PARAM_INT);
+        $st->execute();
         $this->afterDelete();
 
         return true;

@@ -3,6 +3,7 @@ use PHPUnit\Framework\TestCase;
 use Piko\DbRecord\Event\BeforeDeleteEvent;
 use Piko\DbRecord\Event\BeforeSaveEvent;
 use Piko\Tests\Contact;
+use Piko\Tests\ContactLegacy;
 use Piko\Tests\Contact2;
 
 class DbRecordTest extends TestCase
@@ -16,7 +17,7 @@ class DbRecordTest extends TestCase
         $query = <<<EOL
 CREATE TABLE contact (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
+  name TEXT NOT NULL,
   firstname TEXT,
   lastname TEXT,
   `order` INTEGER
@@ -30,15 +31,24 @@ EOL;
         $this->db = null;
     }
 
-    protected function createContact()
+    protected function createContact($className)
     {
-        $contact = new Contact($this->db);
+        $contact = new $className($this->db);
+        $contact->name = 'Toto';
         $contact->firstname = 'Sylvain';
         $contact->lastname = 'Philip';
         $contact->order = 1; // order is a reserved word
         $contact->save();
 
         return $contact;
+    }
+
+    public static function contactProvider()
+    {
+        return [
+            [Contact::class],
+            [ContactLegacy::class]
+        ];
     }
 
     public function testWithNullDb()
@@ -53,9 +63,12 @@ EOL;
         new Contact(new DateTime());
     }
 
-    public function testCreate()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testCreate($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $this->assertEquals(1, $contact->id);
         $this->assertEquals('Sylvain', $contact->firstname);
         $this->assertEquals('Philip', $contact->lastname);
@@ -68,32 +81,44 @@ EOL;
         (new Contact2($this->db))->load(1);
     }
 
-    public function testWrongColumnAccess()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testWrongColumnAccess($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('email is not in the table schema.');
         $contact->email;
     }
 
-    public function testIsset()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testIsset($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $this->assertTrue(isset($contact->order));
         $this->assertFalse(isset($contact->email));
     }
 
-    public function testUnset()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testUnset($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         unset($contact->order);
         $this->assertFalse(isset($contact->order));
         $this->assertNull($contact->order);
     }
 
-    public function testUpdate()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testUpdate($className)
     {
-        $this->createContact();
+        $this->createContact($className);
         $contact = (new Contact($this->db))->load(1);
         $this->assertEquals('Sylvain', $contact->firstname);
 
@@ -104,9 +129,12 @@ EOL;
         $this->assertEquals('Sylvain updated', $contact->firstname);
     }
 
-    public function testBeforeSave()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testBeforeSave($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $contact->on(BeforeSaveEvent::class, function(BeforeSaveEvent $event) {
             $event->record->name = $event->record->firstname . ' ' . $event->record->lastname;
         });
@@ -114,18 +142,24 @@ EOL;
         $this->assertEquals('Sylvain Philip', $contact->name);
     }
 
-    public function testBeforeSaveFalse()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testBeforeSaveFalse($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $contact->on(BeforeSaveEvent::class, function(BeforeSaveEvent $event) {
             $event->isValid = false;
         });
         $this->assertFalse($contact->save());
     }
 
-    public function testDelete()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testDelete($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $this->assertEquals(1, $contact->id);
         $contact->delete();
 
@@ -134,17 +168,23 @@ EOL;
         $contact = (new Contact($this->db))->load(1);
     }
 
-    public function testDeleteNotLoaded()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testDeleteNotLoaded($className)
     {
-        $contact = new Contact($this->db);
+        $contact = new $className($this->db);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Item cannot be delete because it is not loaded.');
         $contact->delete();
     }
 
-    public function testBeforeDelete()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testBeforeDelete($className)
     {
-        $contact = $this->createContact();
+        $contact = $this->createContact($className);
         $contact->on(BeforeDeleteEvent::class, function(BeforeDeleteEvent $event) {
             if ($event->record->firstname == 'Sylvain') {
                 $event->isValid = false;
@@ -154,9 +194,12 @@ EOL;
         $this->assertFalse($contact->delete());
     }
 
-    public function testModelValidation()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testModelValidation($className)
     {
-        $model = new Contact($this->db);
+        $model = new $className($this->db);
 
         $this->assertFalse($model->isValid());
 
@@ -165,7 +208,7 @@ EOL;
         $this->assertArrayHasKey('firstname', $errors);
         $this->assertArrayHasKey('lastname', $errors);
 
-        $model = new Contact($this->db);
+        $model = new $className($this->db);
 
         $model->firstname = 'John';
         $model->lastname = 'Lennon';
@@ -173,9 +216,12 @@ EOL;
         $this->assertTrue($model->isValid());
     }
 
-    public function testModelBind()
+    /**
+     * @dataProvider contactProvider
+     */
+    public function testModelBind($className)
     {
-        $model = new Contact($this->db);
+        $model = new $className($this->db);
 
         $data = [
             'id' => 1,
