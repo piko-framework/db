@@ -1,10 +1,11 @@
 <?php
-use PHPUnit\Framework\TestCase;
-use Piko\DbRecord\Event\BeforeDeleteEvent;
-use Piko\DbRecord\Event\BeforeSaveEvent;
 use Piko\Tests\Contact;
-use Piko\Tests\ContactLegacy;
 use Piko\Tests\Contact2;
+use Piko\Tests\ContactLegacy;
+use PHPUnit\Framework\TestCase;
+use Piko\DbRecord\Event\BeforeSaveEvent;
+use Piko\DbRecord\Event\BeforeDeleteEvent;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class DbRecordTest extends TestCase
 {
@@ -63,9 +64,7 @@ EOL;
         new Contact(new DateTime());
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testCreate($className)
     {
         $contact = $this->createContact($className);
@@ -81,9 +80,7 @@ EOL;
         (new Contact2($this->db))->load(1);
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testWrongColumnAccess($className)
     {
         $contact = $this->createContact($className);
@@ -92,9 +89,7 @@ EOL;
         $contact->email;
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testIsset($className)
     {
         $contact = $this->createContact($className);
@@ -102,9 +97,7 @@ EOL;
         $this->assertFalse(isset($contact->email));
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testUnset($className)
     {
         $contact = $this->createContact($className);
@@ -113,9 +106,7 @@ EOL;
         $this->assertNull($contact->order);
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testUpdate($className)
     {
         $this->createContact($className);
@@ -129,9 +120,7 @@ EOL;
         $this->assertEquals('Sylvain updated', $contact->firstname);
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testBeforeSave($className)
     {
         $contact = $this->createContact($className);
@@ -142,9 +131,7 @@ EOL;
         $this->assertEquals('Sylvain Philip', $contact->name);
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testBeforeSaveFalse($className)
     {
         $contact = $this->createContact($className);
@@ -154,9 +141,7 @@ EOL;
         $this->assertFalse($contact->save());
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testDelete($className)
     {
         $contact = $this->createContact($className);
@@ -168,9 +153,7 @@ EOL;
         $contact = (new Contact($this->db))->load(1);
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testDeleteNotLoaded($className)
     {
         $contact = new $className($this->db);
@@ -179,9 +162,7 @@ EOL;
         $contact->delete();
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testBeforeDelete($className)
     {
         $contact = $this->createContact($className);
@@ -194,9 +175,7 @@ EOL;
         $this->assertFalse($contact->delete());
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testModelValidation($className)
     {
         $model = new $className($this->db);
@@ -216,9 +195,7 @@ EOL;
         $this->assertTrue($model->isValid());
     }
 
-    /**
-     * @dataProvider contactProvider
-     */
+    #[DataProvider('contactProvider')]
     public function testModelBind($className)
     {
         $model = new $className($this->db);
