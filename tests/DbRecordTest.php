@@ -21,7 +21,8 @@ CREATE TABLE contact (
   name TEXT NOT NULL,
   firstname TEXT,
   lastname TEXT,
-  `order` INTEGER
+  `order` INTEGER,
+  active INTEGER DEFAULT 0
 )
 EOL;
         $this->db->exec($query);
@@ -206,6 +207,7 @@ EOL;
             'firstname' => 'John',
             'lastname' => 'Lennon',
             'order' => 1,
+            'active' => false,
         ];
 
         $model->bind($data);

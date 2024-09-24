@@ -22,6 +22,9 @@ class Contact extends \Piko\DbRecord
     #[FieldAttribute]
     public ?int $order = null;
 
+    #[FieldAttribute]
+    public ?bool $active = false;
+
     protected function validate(): void
     {
         if (empty($this->firstname)) {
