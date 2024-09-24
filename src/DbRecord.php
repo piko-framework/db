@@ -13,8 +13,6 @@ declare(strict_types=1);
 namespace Piko;
 
 use PDO;
-use PDOException;
-use PDOStatement;
 use ReflectionClass;
 use RuntimeException;
 use ReflectionNamedType;
@@ -271,12 +269,6 @@ abstract class DbRecord
     {
         $query = 'SELECT * FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?';
         $st = $this->db->prepare($query);
-
-        if (!$st instanceof PDOStatement) {
-            $error = $this->db->errorInfo();
-            throw new RuntimeException("Query '$query' failed with error {$error[0]} : {$error[2]}");
-        }
-
         $st->setFetchMode(PDO::FETCH_INTO, $this);
         $st->bindParam(1, $id, $this->schema[$this->primaryKey]);
         $st->execute();
@@ -369,14 +361,7 @@ abstract class DbRecord
             $query .= ' WHERE ' . $this->primaryKey . ' = ' . (int) $this->{$this->primaryKey};
         }
 
-        try {
-            $st = $this->db->prepare($query);
-        } catch (PDOException $e) {
-            $code = $e->errorInfo[0] ?? '';
-            $msg = $e->errorInfo[2] ?? '';
-
-            throw new RuntimeException("Query '$query' failed with error {$code} : {$msg}");
-        }
+        $st = $this->db->prepare($query);
 
         $fields = array_keys($this->schema);
 
