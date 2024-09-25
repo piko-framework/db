@@ -96,18 +96,12 @@ abstract class DbRecord
     {
         $driver = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
 
-        switch ($driver) {
-            case 'mysql':
-            case 'sqlite':
-                return '`' . $identifier . '`';
-            case 'pgsql':
-                return '"' . $identifier . '"';
-            case 'sqlsrv':
-            case 'dblib':
-                return '[' . $identifier . ']';
-            default:
-                return $identifier;
-        }
+        return match ($driver) {
+            'mysql', 'sqlite' => '`' . $identifier . '`',
+            'pgsql' => '"' . $identifier . '"',
+            'sqlsrv', 'dblib' => '[' . $identifier . ']',
+            default => $identifier,
+        };
     }
 
     /**

@@ -1,13 +1,20 @@
-# Piko DbRecord
+# Piko Db Record
 
 [![build](https://github.com/piko-framework/db-record/actions/workflows/php.yml/badge.svg)](https://github.com/piko-framework/db-record/actions/workflows/php.yml)
 [![Coverage Status](https://coveralls.io/repos/github/piko-framework/db-record/badge.svg?branch=main)](https://coveralls.io/github/piko-framework/db-record?branch=main)
 
 Piko Db Record is a lightweight Active Record implementation built on top of PDO.
 
+It has been tested and works with the following databases:
+
+- SQLite
+- MySQL
+- PostgreSQL
+- MSSQL
+
 ## Installation
 
-It's recommended that you use Composer to install Piko Db.
+It's recommended that you use Composer to install Piko Db Record.
 
 ```bash
 composer require piko/db-record
