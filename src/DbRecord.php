@@ -103,6 +103,7 @@ abstract class DbRecord
             case 'pgsql':
                 return '"' . $identifier . '"';
             case 'sqlsrv':
+            case 'dblib':
                 return '[' . $identifier . ']';
             default:
                 return $identifier;
