@@ -111,7 +111,14 @@ abstract class DbRecord
     }
 
     /**
-     * @inheritDoc
+     * Retrieve the attributes representing the record in the database.
+     *
+     * This method returns an associative array where each key corresponds to a column name
+     * as defined in the schema, and each value is the respective column's value from the
+     * current instance's data. This can be particularly useful for debugging or when you need
+     * to serialize the record for storage or transmission.
+     *
+     * @return array<string, mixed> An associative array where keys are column names and values are column values.
      */
     protected function getAttributes(): array
     {
