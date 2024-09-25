@@ -249,6 +249,10 @@ abstract class DbRecord
      */
     public function load($id = 0): DbRecord
     {
+        if (!isset($this->schema[$this->primaryKey])) {
+            throw new RuntimeException("The primary key {$this->primaryKey} is not defined in the table schema");
+        }
+
         $query = 'SELECT * FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?';
         $st = $this->db->prepare($query);
         $st->setFetchMode(PDO::FETCH_INTO, $this);
@@ -323,20 +327,30 @@ abstract class DbRecord
             return false;
         }
 
-        $cols = array_keys($this->schema);
+        $fields = array_keys($this->schema);
         $valueKeys = [];
 
         if ($insert) {
-            foreach ($cols as &$key) {
-                $valueKeys[] = ':' . $key;
-                $key = $this->quoteIdentifier($key);
+
+            $cols = [];
+            $primaryKeyIndex = array_search($this->primaryKey, $fields);
+
+            // Remove the primary key from the fields array
+            if ($primaryKeyIndex !== false) {
+                unset($fields[$primaryKeyIndex]);
+            }
+
+            foreach ($fields as $field) {
+                $valueKeys[] = ':' . $field;
+                $cols[] = $this->quoteIdentifier($field);
             }
 
             $query = 'INSERT INTO ' . $this->quoteIdentifier($this->tableName) . ' (' . implode(', ', $cols) . ')';
             $query .= ' VALUES (' . implode(', ', $valueKeys) . ')';
+
         } else {
-            foreach ($cols as $key) {
-                $valueKeys[] = $this->quoteIdentifier($key) . '= :' . $key;
+            foreach ($fields as $field) {
+                $valueKeys[] = $this->quoteIdentifier($field) . '= :' . $field;
             }
 
             $query = 'UPDATE ' . $this->quoteIdentifier($this->tableName) . ' SET ' . implode(', ', $valueKeys);
@@ -344,8 +358,6 @@ abstract class DbRecord
         }
 
         $st = $this->db->prepare($query);
-
-        $fields = array_keys($this->schema);
 
         foreach ($fields as $field) {
             $st->bindValue(':' . $field, $this->$field, $this->schema[$field]);
