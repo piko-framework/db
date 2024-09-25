@@ -331,15 +331,15 @@ abstract class DbRecord
         $fields = array_keys($this->schema);
         $valueKeys = [];
 
+        $primaryKeyIndex = array_search($this->primaryKey, $fields);
+
+        // Remove the primary key from the fields array
+        if ($primaryKeyIndex !== false) {
+            unset($fields[$primaryKeyIndex]);
+        }
+
         if ($insert) {
-
             $cols = [];
-            $primaryKeyIndex = array_search($this->primaryKey, $fields);
-
-            // Remove the primary key from the fields array
-            if ($primaryKeyIndex !== false) {
-                unset($fields[$primaryKeyIndex]);
-            }
 
             foreach ($fields as $field) {
                 $valueKeys[] = ':' . $field;
