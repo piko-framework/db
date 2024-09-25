@@ -110,37 +110,19 @@ abstract class DbRecord
     }
 
     /**
-     * Override ModelTrait::bind()
-     *
-     * @param array<string, string|int|bool> $data
+     * @inheritDoc
      */
-    public function bind(array $data): void
+    protected function getAttributes(): array
     {
         $fields = array_keys($this->schema);
 
-        foreach ($fields as $field) {
-            if (isset($data[$field])) {
-                $this->$field = $data[$field];
-            }
-        }
-    }
-
-    /**
-     * Override ModelTrait::toArray()
-     *
-     * @return mixed[]
-     */
-    public function toArray(): array
-    {
-        $fields = array_keys($this->schema);
-
-        $data = [];
+        $attributes = [];
 
         foreach ($fields as $field) {
-            $data[$field] = $this->$field;
+            $attributes[$field] = $this->$field;
         }
 
-        return $data;
+        return $attributes;
     }
 
     /**
