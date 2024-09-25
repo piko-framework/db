@@ -14,6 +14,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install MsSQL Server
+      run: docker run -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=1StrongPwd%" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+
+    - name: Start Mysql server
+      run: sudo systemctl start mysql.service
+
+    - name: Start PostgreSql server
+      run: sudo systemctl start postgresql.service
+
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
 
@@ -28,10 +37,10 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
-      
+
     - name: Check coding standards
       run: vendor/bin/phpcs --standard=vendor/piko/core/coding-standard src
-      
+
     - name: Code Analysis
       run: vendor/bin/phpstan
 

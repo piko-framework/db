@@ -1,4 +1,9 @@
 <?php
+namespace Piko\Tests;
+
+use PDO;
+use RuntimeException;
+use TypeError;
 use Piko\Tests\Contact;
 use Piko\Tests\Contact2;
 use Piko\Tests\ContactLegacy;
@@ -7,35 +12,13 @@ use Piko\DbRecord\Event\BeforeSaveEvent;
 use Piko\DbRecord\Event\BeforeDeleteEvent;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class DbRecordTest extends TestCase
+abstract class AbstractTestDbRecord extends TestCase
 {
-    protected $db;
-
-    protected function setUp(): void
-    {
-        $this->db = new PDO('sqlite::memory:');
-
-        $query = <<<EOL
-CREATE TABLE contact (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  firstname TEXT,
-  lastname TEXT,
-  `order` INTEGER,
-  active INTEGER DEFAULT 0
-)
-EOL;
-        $this->db->exec($query);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->db = null;
-    }
+    protected static ?PDO $db = null;
 
     protected function createContact($className)
     {
-        $contact = new $className($this->db);
+        $contact = new $className(self::$db);
         $contact->name = 'Toto';
         $contact->firstname = 'Sylvain';
         $contact->lastname = 'Philip';
@@ -62,7 +45,7 @@ EOL;
     public function testWithWrongDb()
     {
         $this->expectException(TypeError::class);
-        new Contact(new DateTime());
+        new Contact(new \DateTime());
     }
 
     #[DataProvider('contactProvider')]
@@ -77,8 +60,8 @@ EOL;
     public function testLoadWithWrongPrimaryKey()
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessageMatches('/no such column: contact_id/');
-        (new Contact2($this->db))->load(1);
+        $this->expectExceptionMessageMatches('/primary key contact_id is not defined/');
+        (new Contact2(self::$db))->load(1);
     }
 
     #[DataProvider('contactProvider')]
@@ -111,13 +94,13 @@ EOL;
     public function testUpdate($className)
     {
         $this->createContact($className);
-        $contact = (new Contact($this->db))->load(1);
+        $contact = (new Contact(self::$db))->load(1);
         $this->assertEquals('Sylvain', $contact->firstname);
 
         $contact->firstname .= ' updated';
         $contact->save();
 
-        $contact = (new Contact($this->db))->load(1);
+        $contact = (new Contact(self::$db))->load(1);
         $this->assertEquals('Sylvain updated', $contact->firstname);
     }
 
@@ -151,13 +134,13 @@ EOL;
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Error while trying to load item 1');
-        $contact = (new Contact($this->db))->load(1);
+        $contact = (new Contact(self::$db))->load(1);
     }
 
     #[DataProvider('contactProvider')]
     public function testDeleteNotLoaded($className)
     {
-        $contact = new $className($this->db);
+        $contact = new $className(self::$db);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Item cannot be delete because it is not loaded.');
         $contact->delete();
@@ -179,7 +162,7 @@ EOL;
     #[DataProvider('contactProvider')]
     public function testModelValidation($className)
     {
-        $model = new $className($this->db);
+        $model = new $className(self::$db);
 
         $this->assertFalse($model->isValid());
 
@@ -188,7 +171,7 @@ EOL;
         $this->assertArrayHasKey('firstname', $errors);
         $this->assertArrayHasKey('lastname', $errors);
 
-        $model = new $className($this->db);
+        $model = new $className(self::$db);
 
         $model->firstname = 'John';
         $model->lastname = 'Lennon';
@@ -199,7 +182,7 @@ EOL;
     #[DataProvider('contactProvider')]
     public function testModelBind($className)
     {
-        $model = new $className($this->db);
+        $model = new $className(self::$db);
 
         $data = [
             'id' => 1,
@@ -211,6 +194,7 @@ EOL;
         ];
 
         $model->bind($data);
+        // var_dump($model);
         $this->assertEquals($data, $model->toArray());
     }
 }

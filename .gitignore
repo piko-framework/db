@@ -1,7 +1,8 @@
-/.buildpath
-/.project
-/.settings
-/coverage
-/vendor
-/composer.lock
-/.phpunit.cache
+.buildpath
+.project
+.settings
+coverage
+vendor
+composer.lock
+phpunit.xml
+.phpunit.cache

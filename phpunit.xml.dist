@@ -23,4 +23,15 @@
             <directory>src</directory>
         </include>
     </source>
+    <php>
+        <env name="MYSQL_HOST" value="127.0.0.1"/>
+        <env name="MYSQL_USER" value="root"/>
+        <env name="MYSQL_PASSWORD" value="rot"/>
+        <env name="POSTGRESQL_HOST" value="127.0.0.1"/>
+        <env name="POSTGRESQL_USER" value="postgres"/>
+        <env name="POSTGRESQL_PASSWORD" value=""/>
+        <env name="MSSQL_HOST" value="127.0.0.1"/>
+        <env name="MSSQL_USER" value="sa"/>
+        <env name="MSSQL_PASSWORD" value="1StrongPwd%"/>
+    </php>
 </phpunit>
