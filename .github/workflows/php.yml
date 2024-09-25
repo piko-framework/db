@@ -21,7 +21,10 @@ jobs:
       run: sudo systemctl start mysql.service
 
     - name: Start PostgreSql server
-      run: sudo systemctl start postgresql.service
+      run: |
+        sudo systemctl start postgresql.service
+        pg_isready
+        sudo -u postgres createuser -s -d -r -w runner
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
