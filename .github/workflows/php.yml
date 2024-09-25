@@ -24,7 +24,7 @@ jobs:
       run: |
         sudo systemctl start postgresql.service
         pg_isready
-        sudo -u postgres createuser -s -d -r -w runner
+        sudo -u postgres psql -c "CREATE USER runner WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '1StrongPwd%'"
 
     - name: Validate composer.json and composer.lock
       run: composer validate --strict
