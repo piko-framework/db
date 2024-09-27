@@ -10,13 +10,13 @@
 
 declare(strict_types=1);
 
-namespace Piko\DbRecord;
+namespace Piko\DbRecord\Attribute;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
 /**
- * The TableAttribute class is used to associate a PHP class with a specific database table.
+ * The Table class is used to associate a PHP class with a specific database table.
  *
  * This attribute can be applied to a class to define the corresponding database table name.
  * It is part of the Piko DbRecord framework, which aims to simplify database interactions
@@ -25,7 +25,7 @@ use Attribute;
  * Usage example:
  *
  * ```php
- * #[TableAttribute(tableName: 'users')]
+ * #[Table(name: 'users')]
  * class User {
  *     // Class implementation
  * }
@@ -34,14 +34,14 @@ use Attribute;
  * @package Piko\DbRecord
  * @author Sylvain PHILIP <contact@sphilip.com>
  */
-class TableAttribute
+class Table
 {
     /**
      * Constructor for TableAttribute class.
      *
-     * @param string $tableName The name of the database table associated with the class.
+     * @param string $name The name of the database table associated with the class.
      */
-    public function __construct(public string $tableName)
+    public function __construct(public string $name)
     {
     }
 }

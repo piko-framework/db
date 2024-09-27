@@ -10,11 +10,12 @@
 
 declare(strict_types=1);
 
-namespace Piko\DbRecord;
+namespace Piko\DbRecord\Attribute;
 
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PROPERTY)]
+
 /**
  * Attribute class to define metadata for a database field.
  *
@@ -24,15 +25,15 @@ use Attribute;
  * Usage example:
  *
  * ```php
- * #[TableAttribute('users')]
+ * #[Table('users')]
  * class User {
- *     #[FieldAttribute(primaryKey: true, fieldName: 'id')]
+ *     #[Column(primaryKey: true)]
  *     public int $id;
  *
- *     #[FieldAttribute(fieldName: 'username')]
- *     public string $username;
+ *     #[Column(name: 'user_name')]
+ *     public string $userName;
  *
- *     #[FieldAttribute(fieldName: 'email')]
+ *     #[Column]
  *     public string $email;
  *
  *     // Class implementation
@@ -42,15 +43,15 @@ use Attribute;
  * @package Piko\DbRecord
  * @author Sylvain PHILIP <contact@sphilip.com>
  */
-class FieldAttribute
+class Column
 {
     /**
-     * Constructor for the FieldAttribute class.
+     * Constructor for the Column class.
      *
      * @param bool $primaryKey Indicates if the field is a primary key. Default is false.
-     * @param string|null $fieldName The name of the field. Default is null.
+     * @param string|null $name The name of the field. Default is null.
      */
-    public function __construct(public bool $primaryKey = false, public ?string $fieldName = null)
+    public function __construct(public bool $primaryKey = false, public ?string $name = null)
     {
     }
 }

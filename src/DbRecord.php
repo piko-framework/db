@@ -17,8 +17,8 @@ use ReflectionClass;
 use RuntimeException;
 use ReflectionNamedType;
 use InvalidArgumentException;
-use Piko\DbRecord\FieldAttribute;
-use Piko\DbRecord\TableAttribute;
+use Piko\DbRecord\Attribute\Table;
+use Piko\DbRecord\Attribute\Column;
 use Piko\DbRecord\Event\AfterSaveEvent;
 use Piko\DbRecord\Event\BeforeSaveEvent;
 use Piko\DbRecord\Event\AfterDeleteEvent;
@@ -156,19 +156,19 @@ abstract class DbRecord
     {
         $reflectionClass = new ReflectionClass($this);
 
-        $tableAttribute = $reflectionClass->getAttributes(TableAttribute::class)[0] ?? null;
+        $tableAttribute = $reflectionClass->getAttributes(Table::class)[0] ?? null;
 
         if ($tableAttribute) {
-            $this->tableName = $tableAttribute->newInstance()->tableName;
+            $this->tableName = $tableAttribute->newInstance()->name;
         }
 
         foreach ($reflectionClass->getProperties() as $property) {
 
-            $fieldAttribute = $property->getAttributes(FieldAttribute::class)[0] ?? null;
+            $fieldAttribute = $property->getAttributes(Column::class)[0] ?? null;
 
             if ($fieldAttribute) {
                 $fieldInstance = $fieldAttribute->newInstance();
-                $fieldName = $fieldInstance->fieldName ?? $property->getName();
+                $fieldName = $fieldInstance->name ?? $property->getName();
                 $propertyType = $property->getType();
                 // Default type to string if no type is declared
                 $type = $propertyType instanceof ReflectionNamedType ? $propertyType->getName() : 'string';
