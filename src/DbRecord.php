@@ -275,7 +275,16 @@ abstract class DbRecord
             throw new RuntimeException("The primary key {$this->primaryKey} is not defined in the table schema");
         }
 
-        $query = 'SELECT * FROM ' . $this->quoteIdentifier($this->tableName) . ' WHERE ' . $this->primaryKey . ' = ?';
+        $cols = array_keys($this->schema);
+
+        foreach ($cols as &$col) {
+            $col = $this->quoteIdentifier($col);
+        }
+
+        $query = 'SELECT ' . implode(',', $cols) . ' FROM '
+               . $this->quoteIdentifier($this->tableName)
+               . ' WHERE ' . $this->primaryKey . ' = ?';
+
         $st = $this->db->prepare($query);
         $st->setFetchMode(PDO::FETCH_INTO, $this);
         $st->bindParam(1, $id, $this->schema[$this->primaryKey]);
