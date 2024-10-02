@@ -188,6 +188,7 @@ abstract class DbRecord
             'int' => self::TYPE_INT,
             'string' => self::TYPE_STRING,
             'bool' => self::TYPE_BOOL,
+            'float' => self::TYPE_STRING,
             default => throw new InvalidArgumentException("Unsupported type: $type"),
         };
     }
