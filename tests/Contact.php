@@ -20,6 +20,9 @@ class Contact extends \Piko\DbRecord
     public ?string $lastname = null;
 
     #[Column]
+    public ?int $age = null;
+
+    #[Column]
     public ?int $order = null;
 
     #[Column]

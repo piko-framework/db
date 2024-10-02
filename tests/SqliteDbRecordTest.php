@@ -14,6 +14,7 @@ CREATE TABLE contact (
   name TEXT NOT NULL,
   firstname TEXT,
   lastname TEXT,
+  age INTEGER,
   `order` INTEGER,
   active INTEGER DEFAULT 0,
   active2 INTEGER DEFAULT 1,

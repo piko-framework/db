@@ -26,6 +26,7 @@ CREATE TABLE contact (
   name NVARCHAR(255) NOT NULL,
   firstname NVARCHAR(255),
   lastname NVARCHAR(255),
+  age INT NULL,
   [order] INT,
   active BIT DEFAULT 0 NULL,
   active2 BIT DEFAULT 1,

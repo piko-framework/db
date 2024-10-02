@@ -196,10 +196,6 @@ abstract class DbRecord
     private function getNormalizedFieldValue(string $fieldName): mixed
     {
         if ($this->$fieldName === null) {
-            if (!isset($this->schema[$fieldName])) {
-                throw new InvalidArgumentException("Fieldname: $fieldName is not in the table schema.");
-            }
-
             $type = $this->schema[$fieldName];
 
             return match ($type) {

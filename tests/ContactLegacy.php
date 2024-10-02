@@ -10,10 +10,11 @@ class ContactLegacy extends \Piko\DbRecord
         'name'      => self::TYPE_STRING,
         'firstname' => self::TYPE_STRING,
         'lastname'  => self::TYPE_STRING,
+        'age'       => self::TYPE_INT,
         'order'     => self::TYPE_INT,
         'active'    => self::TYPE_BOOL,
         'active2'   => self::TYPE_BOOL,
-        'income'   => self::TYPE_STRING,
+        'income'    => self::TYPE_STRING,
     ];
 
     protected function validate(): void

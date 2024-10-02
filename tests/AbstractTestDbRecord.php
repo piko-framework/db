@@ -19,7 +19,7 @@ abstract class AbstractTestDbRecord extends TestCase
     protected function createContact($className)
     {
         $contact = new $className(self::$db);
-        $contact->name = 'Toto';
+        // $contact->name = 'Toto';
         $contact->firstname = 'Sylvain';
         $contact->lastname = 'Philip';
         $contact->order = 1; // order is a reserved word
@@ -190,6 +190,7 @@ abstract class AbstractTestDbRecord extends TestCase
             'name' => 'John Lennon',
             'firstname' => 'John',
             'lastname' => 'Lennon',
+            'age' => 45,
             'order' => 1,
             'active' => false,
             'active2' => true,

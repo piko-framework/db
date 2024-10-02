@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS contact (
   name VARCHAR(255) NOT NULL,
   firstname VARCHAR(255),
   lastname VARCHAR(255),
+  age INT,
   `order` INT,
   active INT DEFAULT 0,
   active2 TINYINT DEFAULT 1,
