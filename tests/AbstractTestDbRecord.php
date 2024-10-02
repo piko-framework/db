@@ -23,6 +23,7 @@ abstract class AbstractTestDbRecord extends TestCase
         $contact->firstname = 'Sylvain';
         $contact->lastname = 'Philip';
         $contact->order = 1; // order is a reserved word
+        $contact->income = 0;
         $contact->save();
 
         return $contact;
@@ -191,10 +192,11 @@ abstract class AbstractTestDbRecord extends TestCase
             'lastname' => 'Lennon',
             'order' => 1,
             'active' => false,
+            'active2' => true,
+            'income' => 20230.95
         ];
 
         $model->bind($data);
-        // var_dump($model);
         $this->assertEquals($data, $model->toArray());
     }
 }

@@ -26,7 +26,9 @@ CREATE TABLE IF NOT EXISTS contact (
   firstname VARCHAR(255),
   lastname VARCHAR(255),
   `order` INT,
-  active INT DEFAULT 0
+  active INT DEFAULT 0,
+  active2 TINYINT DEFAULT 1,
+  income FLOAT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 EOL;
         self::$db->exec($query);

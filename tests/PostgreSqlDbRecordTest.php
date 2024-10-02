@@ -36,7 +36,9 @@ CREATE TABLE IF NOT EXISTS contact (
   firstname VARCHAR(255),
   lastname VARCHAR(255),
   "order" INT,
-  active BOOLEAN DEFAULT FALSE
+  active BOOLEAN DEFAULT FALSE,
+  active2 BOOLEAN DEFAULT TRUE,
+  income FLOAT DEFAULT 0
 );
 EOL;
         self::$db->exec($query);

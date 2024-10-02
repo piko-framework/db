@@ -27,7 +27,9 @@ CREATE TABLE contact (
   firstname NVARCHAR(255),
   lastname NVARCHAR(255),
   [order] INT,
-  active BIT DEFAULT 0 NULL
+  active BIT DEFAULT 0 NULL,
+  active2 BIT DEFAULT 1,
+  income FLOAT DEFAULT 0
 );
 EOL;
         self::$db->exec($query);

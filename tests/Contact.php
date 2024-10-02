@@ -25,6 +25,12 @@ class Contact extends \Piko\DbRecord
     #[Column]
     public ?bool $active = false;
 
+    #[Column]
+    public bool $active2 = true;
+
+    #[Column]
+    public float $income = 0;
+
     protected function validate(): void
     {
         if (empty($this->firstname)) {

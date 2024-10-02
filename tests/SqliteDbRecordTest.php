@@ -15,7 +15,9 @@ CREATE TABLE contact (
   firstname TEXT,
   lastname TEXT,
   `order` INTEGER,
-  active INTEGER DEFAULT 0
+  active INTEGER DEFAULT 0,
+  active2 INTEGER DEFAULT 1,
+  income REAL DEFAULT 0
 )
 EOL;
         self::$db->exec($query);
