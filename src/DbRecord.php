@@ -192,6 +192,26 @@ abstract class DbRecord
         };
     }
 
+    private function getNormalizedFieldValue(string $fieldName): mixed
+    {
+        if ($this->$fieldName === null) {
+            if (!isset($this->schema[$fieldName])) {
+                throw new InvalidArgumentException("Fieldname: $fieldName is not in the table schema.");
+            }
+
+            $type = $this->schema[$fieldName];
+
+            return match ($type) {
+                self::TYPE_INT => 0,
+                self::TYPE_STRING => '' ,
+                self::TYPE_BOOL => false,
+                default => throw new InvalidArgumentException("Unsupported type: $type"),
+            };
+        }
+
+        return $this->$fieldName;
+    }
+
     /**
      * Magick method to access rows's data as class attribute.
      *
@@ -362,7 +382,7 @@ abstract class DbRecord
         $st = $this->db->prepare($query);
 
         foreach ($fields as $field) {
-            $st->bindValue(':' . $field, $this->$field, $this->schema[$field]);
+            $st->bindValue(':' . $field, $this->getNormalizedFieldValue($field), $this->schema[$field]);
         }
 
         $st->execute();
