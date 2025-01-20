@@ -11,7 +11,7 @@ class SQLiteDbRecordTest extends AbstractTestDbRecord
         $query = <<<EOL
 CREATE TABLE contact (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
+  name TEXT,
   firstname TEXT,
   lastname TEXT,
   age INTEGER,

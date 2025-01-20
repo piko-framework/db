@@ -22,7 +22,7 @@ class MySqlDbRecordTest extends AbstractTestDbRecord
         $query = <<<EOL
 CREATE TABLE IF NOT EXISTS contact (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NULL,
   firstname VARCHAR(255),
   lastname VARCHAR(255),
   age INT,

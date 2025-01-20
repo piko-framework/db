@@ -23,7 +23,7 @@ class MsSqlDbRecordTest extends AbstractTestDbRecord
 IF OBJECT_ID('contact', 'U') IS NULL
 CREATE TABLE contact (
   id INT IDENTITY(1,1) PRIMARY KEY,
-  name NVARCHAR(255) NOT NULL,
+  name NVARCHAR(255) NULL,
   firstname NVARCHAR(255),
   lastname NVARCHAR(255),
   age INT NULL,

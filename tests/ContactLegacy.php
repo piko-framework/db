@@ -17,6 +17,15 @@ class ContactLegacy extends \Piko\DbRecord
         'income'    => self::TYPE_STRING,
     ];
 
+    protected function beforeSave(bool $insert): bool
+    {
+        if ($this->active2 === null) {
+            $this->active2 = true;
+        }
+
+        return parent::beforeSave($insert);
+    }
+
     protected function validate(): void
     {
         if (empty($this->firstname)) {
